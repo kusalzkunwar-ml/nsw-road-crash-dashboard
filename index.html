@@ -51,7 +51,12 @@
 <div class="roadline" aria-hidden="true"></div>
 
 <!-- ══ FILTERS ══════════════════════════════════════════════════════════ -->
-<div class="filterbar">
+<div class="filterbar is-collapsed" id="filterbar">
+  <button class="btn filter-toggle" id="filter-toggle" type="button"
+          aria-expanded="false" aria-controls="filter-fields">
+    <span class="filter-chev" aria-hidden="true"></span>Filters<span class="filter-badge" id="filter-badge"></span>
+  </button>
+  <div class="filter-fields" id="filter-fields">
   <div class="field">
     <label for="f-year">Year</label>
     <select id="f-year"><option value="all">All years</option></select>
@@ -93,6 +98,7 @@
     </select>
   </div>
   <button class="btn" id="f-reset">Clear filters</button>
+  </div>
   <div class="readout">Mapping <b id="pt-count">—</b> sampled crashes</div>
 </div>
 
@@ -150,7 +156,7 @@
   <aside class="sidebar">
 
     <div class="panel">
-      <h3>Current selection <span class="tag">weighted to NSW scale</span></h3>
+      <h3>Current selection <span class="tag">NSW scale</span></h3>
       <p class="sub">Sample counts are re-weighted by their sampling fraction, so these read as
         state-wide estimates rather than sample tallies.</p>
       <div class="metrics-grid">
