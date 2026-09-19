@@ -1199,9 +1199,32 @@
     Object.entries(map3).forEach(([sel, key]) => {
       $(sel).addEventListener('change', (e) => { state[key] = e.target.value; refresh(); });
     });
+    const FILTER_KEYS = ['year', 'sev', 'wx', 'veh', 'loc', 'lit'];
+    function updateFilterBadge() {
+      const n = FILTER_KEYS.filter((k) => state[k] !== 'all').length;
+      const badge = $('#filter-badge');
+      badge.textContent = n;
+      badge.classList.toggle('is-on', n > 0);
+      badge.title = n ? `${n} filter${n > 1 ? 's' : ''} applied` : '';
+    }
+
+    $('#filter-toggle').addEventListener('click', () => {
+      const bar = $('#filterbar');
+      const open = bar.classList.toggle('is-collapsed') === false;
+      $('#filter-toggle').setAttribute('aria-expanded', String(open));
+      // the map shares the row's space, so it has to re-measure
+      if (map) setTimeout(() => map.invalidateSize(), 180);
+    });
+
+    Object.entries(map3).forEach(([sel]) => {
+      $(sel).addEventListener('change', updateFilterBadge);
+    });
+    updateFilterBadge();
+
     $('#f-reset').addEventListener('click', () => {
       Object.assign(state, { year: 'all', sev: 'all', wx: 'all', veh: 'all', loc: 'all', lit: 'all' });
       Object.keys(map3).forEach((s) => { $(s).value = 'all'; });
+      updateFilterBadge();
       refresh();
     });
 

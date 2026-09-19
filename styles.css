@@ -392,21 +392,25 @@ select:hover { border-color: var(--hivis-dim); }
 }
 .panel > h3 {
   font-family: var(--f-display);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: .07em;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .055em;
   text-transform: uppercase;
-  margin-bottom: 2px;
+  color: var(--line);
+  margin-bottom: 9px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 .panel > h3::before {
   content: "";
-  width: 3px;
-  height: 13px;
+  width: 5px;
+  height: 18px;
   background: var(--hivis);
-  border-radius: 1px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 .panel.model-panel > h3::before { background: var(--model); }
 .panel > h3 .tag {
@@ -501,13 +505,35 @@ select:hover { border-color: var(--hivis-dim); }
   max-width: 1560px;
   margin: 0 auto;
 }
-.page-head { margin-bottom: 14px; }
+.page-head { margin-bottom: 18px; }
 .page-head h2 {
   font-family: var(--f-display);
-  font-size: 26px;
+  font-size: 34px;
   font-weight: 700;
-  letter-spacing: .03em;
+  letter-spacing: .02em;
   text-transform: uppercase;
+  line-height: 1.05;
+  color: var(--line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+/* hazard-stripe tick, echoing the poster's road motif */
+.page-head h2::before {
+  content: "";
+  width: 7px;
+  height: 30px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(135deg,
+    var(--hivis) 0 5px, var(--asphalt) 5px 10px);
+  flex-shrink: 0;
+}
+.page-head h2::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--rule);
 }
 .page-head p { color: var(--dim); max-width: 78ch; font-size: 12.5px; }
 
@@ -793,3 +819,48 @@ tbody tr:last-child td { border-bottom: none; }
 :root[data-theme="dark"] .osm-fallback {
   filter: invert(1) hue-rotate(180deg) brightness(.92) contrast(.92);
 }
+
+/* ── COLLAPSIBLE FILTER BAR ───────────────────────────────────────────────
+   The filters start closed so the map gets the room. The badge keeps any
+   active filter visible while the panel is shut, so nobody reads a filtered
+   number as a state-wide one. */
+.filter-fields {
+  display: flex;
+  align-items: center;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+}
+.filterbar.is-collapsed .filter-fields { display: none; }
+
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-display);
+  font-size: 13px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.filter-chev {
+  width: 0; height: 0;
+  border-left: 5px solid currentColor;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transition: transform .18s ease;
+}
+.filterbar:not(.is-collapsed) .filter-chev { transform: rotate(90deg); }
+
+.filter-badge {
+  display: none;
+  min-width: 17px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--hivis);
+  color: #16202E;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  line-height: 17px;
+  text-align: center;
+  font-weight: 600;
+}
+.filter-badge.is-on { display: inline-block; }
