@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+  /* Set the theme before anything paints, so a dark-mode visitor never sees a
+     white flash. Wrapped because storage throws in some privacy modes. */
+  (function () {
+    try {
+      if (localStorage.getItem('crash-theme') === 'dark')
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } catch (e) { /* default light */ }
+  })();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSW Crash Risk Console — GIS + Machine Learning</title>
+<meta name="description" content="Exploratory analysis and a trained fatality-risk model for 92,082 NSW road crashes, 2020–2024.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Saira+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ══ TOP BAR ══════════════════════════════════════════════════════════ -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true"></div>
+    <div>
+      <h1>NSW Crash Risk <em>Console</em></h1>
+      <p id="brand-sub">92,082 crashes · 2020–2024 · GIS + ML</p>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button class="tab" role="tab" id="tab-explore" aria-selected="true" aria-controls="view-explore">Explore</button>
+    <button class="tab" role="tab" id="tab-model" aria-selected="false" aria-controls="view-model">Model</button>
+    <button class="tab" role="tab" id="tab-predict" aria-selected="false" aria-controls="view-predict">Predict</button>
+  </nav>
+
+  <button class="theme-btn" id="theme-toggle" type="button"
+          aria-pressed="false" title="Switch between light and dark">Dark mode</button>
+
+  <div class="stamp">
+    <div>Source · <b>Transport for NSW</b></div>
+    <div>Model · <b id="stamp-auc">—</b> test AUC</div>
+  </div>
+</header>
+<div class="roadline" aria-hidden="true"></div>
+
+<!-- ══ FILTERS ══════════════════════════════════════════════════════════ -->
+<div class="filterbar">
+  <div class="field">
+    <label for="f-year">Year</label>
+    <select id="f-year"><option value="all">All years</option></select>
+  </div>
+  <div class="field">
+    <label for="f-sev">Severity</label>
+    <select id="f-sev">
+      <option value="all">All outcomes</option>
+      <option value="0">Fatal</option>
+      <option value="1">Injury</option>
+      <option value="2">Non-casualty</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-wx">Weather</label>
+    <select id="f-wx"><option value="all">Any weather</option></select>
+  </div>
+  <div class="field">
+    <label for="f-veh">Vehicle</label>
+    <select id="f-veh"><option value="all">Any vehicle</option></select>
+  </div>
+  <div class="field">
+    <label for="f-loc">Location</label>
+    <select id="f-loc">
+      <option value="all">Anywhere in NSW</option>
+      <option value="0">Metro Sydney</option>
+      <option value="1">Regional city</option>
+      <option value="2">Rural / remote</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-lit">Lighting</label>
+    <select id="f-lit">
+      <option value="all">Any lighting</option>
+      <option value="nil">No street lighting</option>
+      <option value="off">Present, switched off</option>
+      <option value="on">Lit</option>
+      <option value="unknown">Not recorded</option>
+    </select>
+  </div>
+  <button class="btn" id="f-reset">Clear filters</button>
+  <div class="readout">Mapping <b id="pt-count">—</b> sampled crashes</div>
+</div>
+
+<!-- ══ KPI STRIP ════════════════════════════════════════════════════════ -->
+<div class="kpis">
+  <div class="kpi k-total">
+    <div class="kpi-val" id="kpi-total">—</div>
+    <div class="kpi-label">Crashes recorded</div>
+    <div class="kpi-note">2020–2024, all NSW</div>
+  </div>
+  <div class="kpi k-fatal">
+    <div class="kpi-val" id="kpi-fatal">—</div>
+    <div class="kpi-label">Fatal crashes</div>
+    <div class="kpi-note" id="kpi-fatal-note">—</div>
+  </div>
+  <div class="kpi k-killed">
+    <div class="kpi-val" id="kpi-killed">—</div>
+    <div class="kpi-label">Lives lost</div>
+    <div class="kpi-note" id="kpi-killed-note">—</div>
+  </div>
+  <div class="kpi k-injured">
+    <div class="kpi-val" id="kpi-injured">—</div>
+    <div class="kpi-label">People injured</div>
+    <div class="kpi-note" id="kpi-injured-note">—</div>
+  </div>
+  <div class="kpi k-model">
+    <div class="kpi-val" id="kpi-auc">—</div>
+    <div class="kpi-label">Model test AUC</div>
+    <div class="kpi-note" id="kpi-model-note">logistic regression</div>
+  </div>
+</div>
+
+<main>
+
+<!-- ══ VIEW 1 — EXPLORE ═════════════════════════════════════════════════ -->
+<section class="view is-on explore" id="view-explore" role="tabpanel" aria-labelledby="tab-explore">
+
+  <div class="mapwrap">
+    <div id="map"></div>
+
+    <div class="map-tools">
+      <button class="btn is-active" data-mapmode="dot">Crash points</button>
+      <button class="btn" data-mapmode="grid">Density grid</button>
+      <button class="btn" data-mapmode="cluster">K-means hotspots</button>
+      <button class="btn" data-mapmode="risk">Model risk</button>
+      <div class="k-control" id="k-control">
+        <span>k =&nbsp;<b id="k-val">6</b></span>
+        <input type="range" id="k-slider" min="2" max="12" step="1" value="6" aria-label="Number of clusters">
+      </div>
+    </div>
+
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="panel">
+      <h3>Current selection <span class="tag">weighted to NSW scale</span></h3>
+      <p class="sub">Sample counts are re-weighted by their sampling fraction, so these read as
+        state-wide estimates rather than sample tallies.</p>
+      <div class="metrics-grid">
+        <div class="metric"><div class="mv" id="sel-crashes">—</div><div class="ml">Est. crashes</div></div>
+        <div class="metric"><div class="mv" id="sel-fatal">—</div><div class="ml">Fatal share</div></div>
+        <div class="metric"><div class="mv" id="sel-speed">—</div><div class="ml">Mean speed zone</div></div>
+        <div class="metric is-model"><div class="mv" id="sel-risk">—</div><div class="ml">Mean model risk</div></div>
+      </div>
+      <div class="note" id="sel-note">Adjust the filters above to compare conditions.</div>
+    </div>
+
+    <div class="panel">
+      <h3>Severity mix</h3>
+      <div class="hbars" id="sev-bars"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Fatality rate by speed zone</h3>
+      <p class="sub">Share of crashes in each zone that were fatal.</p>
+      <div class="chart-box" style="height:150px"><canvas id="c-speed"></canvas></div>
+      <div class="note" id="speed-note">—</div>
+    </div>
+
+    <div class="panel">
+      <h3>Crashes by year</h3>
+      <div class="chart-box" style="height:110px"><canvas id="c-year"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <h3>Time of day <span class="tag">full dataset</span></h3>
+      <div class="chart-box" style="height:130px"><canvas id="c-hour"></canvas></div>
+      <div class="note" id="hour-note">—</div>
+    </div>
+
+    <div class="panel">
+      <h3>Day of week <span class="tag">full dataset</span></h3>
+      <div class="chart-box" style="height:105px"><canvas id="c-day"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <h3>Monthly pattern <span class="tag">full dataset</span></h3>
+      <div class="chart-box" style="height:110px"><canvas id="c-month"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <h3>Weather &amp; outcome <span class="tag">full dataset</span></h3>
+      <div class="chart-box" style="height:130px"><canvas id="c-weather"></canvas></div>
+      <div class="note">Most crashes happen in fine weather simply because most driving does. Rain
+        raises crash <b>frequency</b>, not the chance a given crash turns fatal — the model finds the
+        same thing.</div>
+    </div>
+
+    <div class="panel">
+      <h3>Top LGAs by crash count</h3>
+      <div class="hbars" id="lga-bars"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Key traffic unit type</h3>
+      <div class="hbars" id="veh-bars"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Crash configuration <span class="tag">RUM code</span></h3>
+      <p class="sub">Road User Movement recorded for each of the 92,082 crashes.</p>
+      <div class="hbars" id="man-bars"></div>
+    </div>
+
+    <div class="panel">
+      <h3>First impact type <span class="tag">crash file</span></h3>
+      <p class="sub">What the crash struck first, as coded on the crash record.</p>
+      <div class="hbars" id="obj-bars"></div>
+      <div class="note" id="obj-note"></div>
+    </div>
+
+  </aside>
+</section>
+
+<!-- ══ VIEW 2 — MODEL ═══════════════════════════════════════════════════ -->
+<section class="view page" id="view-model" role="tabpanel" aria-labelledby="tab-model">
+  <div class="page-head">
+    <h2>The model</h2>
+    <p>A binary classifier that estimates the probability a crash ends in a fatality, given the
+      speed zone, weather, vehicle type, location class and year. Trained on a stratified sample of
+      9,400 crashes with inverse-sampling weights, so its output sits on the true NSW scale where
+      1.51% of crashes are fatal.</p>
+  </div>
+
+  <div class="grid cols-2">
+
+    <div class="panel model-panel span-2">
+      <h3>How it was built</h3>
+      <div class="pipeline" style="margin-top:10px">
+        <div class="step">
+          <div class="n">01</div><h4>Features</h4>
+          <p>Speed limit, weather bucket, vehicle group, street lighting, and a location class
+            derived from each crash's coordinates — metro, regional city or rural.</p>
+        </div>
+        <div class="step">
+          <div class="n">02</div><h4>Re-weighting</h4>
+          <p>Every fatal crash is in the sample but only a fraction of the others, so rows are
+            weighted <b id="wt-note">—</b> to restore the real class balance.</p>
+        </div>
+        <div class="step">
+          <div class="n">03</div><h4>Fitting</h4>
+          <p>75/25 stratified train–test split, on the crashes where street lighting was
+            recorded. Logistic regression, a depth-3 tree and a 300-tree random forest were
+            fitted on identical features.</p>
+        </div>
+        <div class="step">
+          <div class="n">04</div><h4>Scoring</h4>
+          <p>Coefficients ship with the page, so predictions run in your browser — no server call
+            and no data leaves the machine.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel model-panel">
+      <h3>What drives fatal risk</h3>
+      <p class="sub">Odds multiplier per feature, holding everything else fixed. Above 1&times;
+        raises risk, below 1&times; lowers it.</p>
+      <div class="chart-box" style="height:330px"><canvas id="c-coef"></canvas></div>
+      <div class="note model-note">A <b>motorcycle</b> as the key traffic unit multiplies the odds of a
+        fatal outcome by about <b id="moto-odds">—</b>. Two weather results are worth pausing on: rain lands
+        <em>below</em> 1&times;, because wet-weather crashes cluster on slower urban roads, and fog barely
+        moves the needle even though <b>2.3%</b> of fog crashes are fatal — once speed zone and rural
+        location are accounted for, the fog itself adds almost nothing.</div>
+    </div>
+
+    <div class="panel model-panel">
+      <h3>Discrimination <span class="tag">held-out test set</span></h3>
+      <p class="sub">ROC curve — how well the score separates fatal from non-fatal crashes.</p>
+      <div class="chart-box" style="height:330px"><canvas id="c-roc"></canvas></div>
+      <div class="note model-note">An AUC of <b id="roc-auc">—</b> means that if you pick one fatal and
+        one non-fatal crash at random, the model gives the fatal one the higher score that often.
+        <br><br>The poster quotes <b>0.826</b>. That is a different model: the notebook's Random Forest,
+        on the full set of crash attributes, split by year (train 2020–2022, test on unseen 2024).
+        This page ships a logistic regression on twelve readable features with a random 75/25 split,
+        because its coefficients can be shown and it scores in your browser. The Random Forest is the
+        better classifier; this one is the one you can argue with.</div>
+    </div>
+
+    <div class="panel model-panel">
+      <h3>Operating point</h3>
+      <p class="sub">Fatal crashes are rare, so the decision threshold is a trade: flag more crashes
+        and you catch more deaths but drown in false alarms.</p>
+      <div class="confusion" id="confusion"></div>
+      <div class="slider-row">
+        <span>Threshold</span>
+        <input type="range" id="thresh" min="0" max="59" step="1" value="12" aria-label="Decision threshold">
+        <span id="thresh-val" style="min-width:56px;text-align:right">—</span>
+      </div>
+      <div class="note model-note" id="thresh-note"></div>
+    </div>
+
+    <div class="panel model-panel">
+      <h3>Model comparison</h3>
+      <p class="sub">Same features, same split, weighted metrics.</p>
+      <table id="compare-table">
+        <thead><tr><th>Model</th><th>AUC</th><th>Recall</th><th>Precision</th><th>Accuracy</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="note model-note">The forest scores slightly higher, but the logistic model is the one
+        shipped here: it is small enough to run client-side and every coefficient can be read as a plain
+        odds multiplier — worth more on a road-safety brief than 0.01 of AUC.</div>
+    </div>
+
+    <div class="panel model-panel">
+      <h3>Decision tree, read as rules</h3>
+      <p class="sub">Depth-3 tree over the same features. Percentages are the fitted fatal rate in
+        each leaf.</p>
+      <div class="tree" id="tree"></div>
+    </div>
+
+    <div class="panel model-panel span-2">
+      <div class="trainer-head">
+        <div>
+          <h3>Retrain it here, live</h3>
+          <p class="sub" style="margin-bottom:0">The Adam optimiser minimising weighted log-loss, running in
+            this tab over all 9,400 sampled crashes. It should land on the coefficients scikit-learn
+            found offline.</p>
+        </div>
+        <button class="btn primary" id="train-btn">Run training</button>
+      </div>
+      <div class="grid cols-2" style="margin-top:12px">
+        <div class="chart-box" style="height:230px"><canvas id="c-loss"></canvas></div>
+        <div class="chart-box" style="height:230px"><canvas id="c-weights"></canvas></div>
+      </div>
+      <div class="console" id="console">Ready. Press <span class="hl">Run training</span> to fit the model from scratch.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══ VIEW 3 — PREDICT ═════════════════════════════════════════════════ -->
+<section class="view page" id="view-predict" role="tabpanel" aria-labelledby="tab-predict">
+  <div class="page-head">
+    <h2>Scenario scoring</h2>
+    <p>Set the conditions of a crash and the model returns the probability it ends in a death,
+      alongside the reasoning behind the number. This is a statistical average across NSW crash
+      records, not a prediction about any individual.</p>
+  </div>
+
+  <div class="predict-grid">
+
+    <div class="panel">
+      <h3>Crash conditions</h3>
+      <div class="scenario">
+        <div class="range-field">
+          <div class="top">
+            <label for="p-speed">Speed zone</label>
+            <span class="val" id="p-speed-val">100 km/h</span>
+          </div>
+          <input type="range" id="p-speed" min="40" max="110" step="10" value="100">
+        </div>
+        <div class="field">
+          <label for="p-wx">Weather</label>
+          <select id="p-wx">
+            <option value="clear">Fine</option>
+            <option value="rain">Raining</option>
+            <option value="overcast">Overcast</option>
+            <option value="adverse">Fog / snow / other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p-veh">Key vehicle</label>
+          <select id="p-veh">
+            <option value="car">Car / station wagon</option>
+            <option value="suv">4WD / SUV</option>
+            <option value="light_com">Ute / light truck / van</option>
+            <option value="motorcycle">Motorcycle</option>
+            <option value="vulnerable">Bicycle / scooter</option>
+            <option value="heavy">Heavy truck or bus</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p-loc">Location</label>
+          <select id="p-loc">
+            <option value="0">Metro Sydney</option>
+            <option value="1">Regional city</option>
+            <option value="2" selected>Rural / remote</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p-lit">Street lighting</label>
+          <select id="p-lit">
+            <option value="nil" selected>None</option>
+            <option value="off">Present, switched off</option>
+            <option value="on">Lit</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p-year">Year</label>
+          <select id="p-year">
+            <option value="2020">2020</option><option value="2021">2021</option>
+            <option value="2022">2022</option><option value="2023">2023</option>
+            <option value="2024" selected>2024</option>
+          </select>
+        </div>
+      </div>
+      <div class="note">Presets:
+        <button class="btn" data-preset="worst" style="margin:6px 4px 0 0">Highest risk</button>
+        <button class="btn" data-preset="safest" style="margin:6px 4px 0 0">Lowest risk</button>
+        <button class="btn" data-preset="typical" style="margin:6px 0 0 0">Typical NSW crash</button>
+      </div>
+    </div>
+
+    <div class="dial-panel">
+      <svg id="dial" viewBox="0 0 420 240" role="img" aria-labelledby="dial-title">
+        <title id="dial-title">Predicted probability that this crash is fatal</title>
+      </svg>
+      <div class="dial-value" id="dial-value">—</div>
+      <div class="dial-caption">Probability this crash is fatal</div>
+      <div class="dial-compare" id="dial-compare"></div>
+    </div>
+
+    <div class="panel model-panel">
+      <h3>Why this score</h3>
+      <p class="sub">Each factor's contribution to the log-odds, relative to a baseline crash: a car,
+        in fine weather, in a metro 60&nbsp;km/h zone.</p>
+      <div class="contrib" id="contrib"></div>
+      <div class="note model-note" id="contrib-note"></div>
+    </div>
+
+    <div class="panel model-panel span-2" style="grid-column:1/-1">
+      <h3>Highest-risk local government areas</h3>
+      <p class="sub">Ranked by the model's mean predicted fatality risk across sampled crashes in
+        each LGA (minimum 25 sampled crashes). This measures how dangerous each area's crash
+        <em>conditions</em> are — not how many crashes happen there.</p>
+      <table id="lga-risk-table">
+        <thead><tr><th>Local government area</th><th>Mean speed zone</th><th>Sampled crashes</th><th>Model risk</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="note model-note">These are all rural LGAs on high-speed roads. Compare with the
+        crash-count ranking on the Explore tab, which is topped by Canterbury-Bankstown and
+        Blacktown: the places with the <b>most</b> crashes and the places with the
+        <b>deadliest</b> crashes are almost entirely different lists.</div>
+    </div>
+
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <p><b>Data.</b> Transport for NSW crash and casualty statistics, 2020–2024: <b>92,082 crashes</b>,
+    one row per crash — the same records and the same year filter as the Impact Day poster. Map points
+    are a stratified sample of 9,400 of them — every one of the 1,388 fatal crashes plus a proportional
+    sample of the rest — carried in <code>data.js</code> to keep the page light. Every figure taken
+    from that sample is re-weighted back to the full 92,082 before it is shown.</p>
+  <p style="margin-top:6px"><b>Street lighting.</b> The field is blank on 33,567 of the 92,082
+    crashes. Those reports are 55% non-casualty and contain 8 fatal crashes between them — 0.02%,
+    against 1.51% overall — so a blank marks a minor report, not a lit road. Including it as a
+    category would let the model score crashes on the paperwork instead of the road, so the model is
+    fitted only on the 58,505 crashes where lighting was recorded, and its baseline rate (2.4%) is
+    that group's, not the state's. Crashes with the field blank still appear on the map; they are
+    scored as if lit, which is the reference level.</p>
+  <p style="margin-top:6px"><b>Limits.</b> The model uses only what these files contain. Driver age,
+    alcohol, seatbelt use, road geometry and emergency response times are absent and would all
+    matter. Coefficients describe associations in historical records, not causes, and should not be
+    used to make decisions about individuals.</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
