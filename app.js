@@ -75,7 +75,7 @@
   const pct = (p, d = 2) => (p * 100).toFixed(d) + '%';
   const title = (s) => s.replace(/\b[a-z]/g, (m) => m.toUpperCase());
 
-  /* ══ 1. FEATURE ENCODING — must match train_model.py exactly ══════════ */
+  /* ══ 1. FEATURE ENCODING — must match build_dashboard_data.py exactly ══════════ */
 
   const VULNERABLE = new Set(M.vehGroups.vulnerable);
   const HEAVY = new Set(M.vehGroups.heavy);
