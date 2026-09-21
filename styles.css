@@ -864,3 +864,23 @@ tbody tr:last-child td { border-bottom: none; }
   font-weight: 600;
 }
 .filter-badge.is-on { display: inline-block; }
+
+/* ── RISK TARGET SWITCH ───────────────────────────────────────────────────
+   Two models ship with the page: fatality, and killed-or-seriously-injured.
+   They disagree about which roads matter most, so the choice is explicit. */
+.target-switch { display: flex; align-items: center; gap: 6px; }
+.target-switch .target-label {
+  font-family: var(--f-display);
+  font-size: 12px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-right: 2px;
+}
+.target-switch .btn { font-size: 11.5px; }
+.target-switch .btn.is-active {
+  background: var(--model);
+  border-color: var(--model);
+  color: var(--on-model);
+  font-weight: 600;
+}
