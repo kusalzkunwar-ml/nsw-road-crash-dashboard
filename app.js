@@ -14,6 +14,22 @@
   const D = window.CRASH_DATA;
   const M = D.MODEL;
 
+  // Two targets ship with the page. 'fatal' is whether the crash killed someone;
+  // 'ksi' is killed OR seriously injured, the standard road-safety target, which
+  // is 15x more common and points at a different set of roads. Same features and
+  // same split for both; only the fitted coefficients and baseline differ.
+  const TARGETS = {
+    fatal: { key: 'fatal', label: 'Fatal',
+             short: 'fatal', noun: 'a death',
+             coef: M.coef, intercept: M.intercept, baseRate: M.baseRate,
+             metrics: M.metrics, roc: M.roc, sweep: M.sweep },
+    ksi:   { key: 'ksi', label: 'Killed or seriously injured',
+             short: 'KSI', noun: 'death or serious injury',
+             coef: M.ksi.coef, intercept: M.ksi.intercept, baseRate: M.ksi.baseRate,
+             metrics: M.ksi.metrics, roc: M.ksi.roc, sweep: M.ksi.sweep }
+  };
+  let TGT = TARGETS.fatal;
+
   // Every colour is read from the stylesheet, so light and dark themes are one
   // set of CSS variables rather than two copies of the palette in two files.
   const C = {};
@@ -124,7 +140,7 @@
     return sigmoid(t);
   }
 
-  const predict = (o) => scoreZ(zVec(rawVec(o)), M.coef, M.intercept);
+  const predict = (o) => scoreZ(zVec(rawVec(o)), TGT.coef, TGT.intercept);
 
   /* ══ 2. DECODE THE CRASH SAMPLE ══════════════════════════════════════ */
 
@@ -136,7 +152,7 @@
     const o = {
       lat: a[0], lon: a[1], sev: a[2], year: a[3], speed: a[4],
       wx: D.DICT.wx[a[5]], veh: D.DICT.veh[a[6]], lga: D.DICT.lga[a[7]], loc: a[8],
-      lit: D.DICT.lit[a[9]]
+      lit: D.DICT.lit[a[9]], ksi: a[10]
     };
     o.litG = litGroup(o.lit);
     o.wxB = wxBucket(o.wx);
@@ -158,7 +174,7 @@
   function applyFilter() {
     filtered = PTS.filter((p) =>
       (state.year === 'all' || p.year === +state.year) &&
-      (state.sev === 'all' || p.sev === +state.sev) &&
+      (state.sev === 'all' || (state.sev === 'ksi' ? p.ksi === 1 : p.sev === +state.sev)) &&
       (state.wx === 'all' || p.wxB === state.wx) &&
       (state.veh === 'all' || p.vehG === state.veh) &&
       (state.loc === 'all' || p.loc === +state.loc) &&
@@ -470,15 +486,21 @@
     $('#sel-fatal').textContent = n ? pct(Wf / W, 2) : '—';
     $('#sel-speed').textContent = n ? Math.round(speed) + ' km/h' : '—';
     $('#sel-risk').textContent = n ? pct(risk, 2) : '—';
+    const Wk = filtered.reduce((s, p) => s + (p.ksi ? p.w : 0), 0);
+    $('#sel-ksi').textContent = n ? pct(Wk / W, 1) : '—';
 
     const base = D.AGG.severity[0].n / D.AGG.totals.crashes;
     const note = $('#sel-note');
     if (!n) {
       note.textContent = 'No crashes match this combination of filters.';
     } else if (state.sev !== 'all') {
-      note.innerHTML = `Filtered to <b>${SEV_NAME[+state.sev].toLowerCase()}</b> crashes, so the ` +
-        `fatal share is fixed by the filter. The model risk of <b>${pct(risk, 2)}</b> still reflects ` +
-        `the conditions these crashes happened in.`;
+      // 'ksi' is not one of the three severity codes, so it needs its own label
+      const sevLabel = state.sev === 'ksi'
+        ? 'killed or seriously injured'
+        : SEV_NAME[+state.sev].toLowerCase();
+      note.innerHTML = `Filtered to <b>${sevLabel}</b> crashes, so the outcome mix is fixed by the ` +
+        `filter. The model risk of <b>${pct(risk, 2)}</b> still reflects the conditions these ` +
+        `crashes happened in.`;
     } else {
       const r = (Wf / W) / base;
       note.innerHTML = `Crashes matching these filters are fatal <b>${pct(Wf / W, 2)}</b> of the time — ` +
@@ -688,7 +710,7 @@
 
     // Odds multipliers, sorted by strength
     const rows = M.features.map((f, i) => ({
-      label: M.labels[i], odds: Math.exp(M.coef[i]), coef: M.coef[i]
+      label: M.labels[i], odds: Math.exp(TGT.coef[i]), coef: TGT.coef[i]
     })).sort((a, b) => Math.abs(b.coef) - Math.abs(a.coef));
 
     chart('c-coef', {
@@ -729,7 +751,7 @@
       data: {
         datasets: [
           {
-            label: 'Model', data: M.roc.map((p) => ({ x: p[0], y: p[1] })),
+            label: 'Model', data: TGT.roc.map((p) => ({ x: p[0], y: p[1] })),
             borderColor: C.model, backgroundColor: `rgba(${C.modelRGB},.14)`,
             borderWidth: 2, fill: true, pointRadius: 0, tension: 0.05
           },
@@ -760,7 +782,7 @@
         }
       }
     });
-    $('#roc-auc').textContent = M.metrics.auc.toFixed(3);
+    $('#roc-auc').textContent = TGT.metrics.auc.toFixed(3);
 
     // Comparison table
     const best = M.compare.reduce((a, b) => (b.auc > a.auc ? b : a));
@@ -780,7 +802,7 @@
   }
 
   function renderConfusion(idx) {
-    const s = M.sweep[idx];
+    const s = TGT.sweep[idx];
     const [tn, fp, fn, tp] = s.confusion;
     $('#thresh-val').textContent = pct(s.t, 2);
     $('#confusion').innerHTML = `
@@ -804,7 +826,7 @@
   function renderTree() {
     const node = (n, cond) => {
       if (n.leaf) {
-        const hot = n.p > M.baseRate * 2;
+        const hot = n.p > M.baseRate * 2;  // the tree is fitted on the fatal target only
         return `<li><span class="yes">${cond}</span> &rarr; ` +
           `<span class="leafv ${hot ? 'hot' : ''}">${pct(n.p, 2)} fatal</span>` +
           ` <span style="color:var(--dimmer)">(n=${fmt(n.n)})</span></li>`;
@@ -883,13 +905,13 @@
       }
     });
 
-    const order = M.features.map((f, i) => i).sort((a, b) => Math.abs(M.coef[b]) - Math.abs(M.coef[a]));
+    const order = M.features.map((f, i) => i).sort((a, b) => Math.abs(TGT.coef[b]) - Math.abs(TGT.coef[a]));
     chart('c-weights', {
       type: 'bar',
       data: {
         labels: order.map((i) => M.labels[i]),
         datasets: [
-          { label: 'scikit-learn', data: order.map((i) => M.coef[i]), backgroundColor: `rgba(${C.modelRGB},.85)`, borderRadius: 2 },
+          { label: 'scikit-learn', data: order.map((i) => TGT.coef[i]), backgroundColor: `rgba(${C.modelRGB},.85)`, borderRadius: 2 },
           { label: 'trained in browser', data: order.map(() => 0), backgroundColor: `rgba(${C.hivisRGB},.9)`, borderRadius: 2 }
         ]
       },
@@ -927,7 +949,7 @@
     buildMatrix();
     const n = PTS.length;
     const b = new Float64Array(NF);
-    let b0 = Math.log(M.baseRate / (1 - M.baseRate));    // start at the base rate
+    let b0 = Math.log(TGT.baseRate / (1 - TGT.baseRate));    // start at the base rate
     const LR = 0.05, EPOCHS = 600, CHUNK = 20;
     const B1 = 0.9, B2 = 0.999, EPS = 1e-8;
     const lossChart = charts['c-loss'];
@@ -989,7 +1011,7 @@
         requestAnimationFrame(step);
       } else {
         const auc = weightedAUC(scores);
-        const diff = Math.max.apply(null, M.coef.map((c, i) => Math.abs(c - b[i])));
+        const diff = Math.max.apply(null, TGT.coef.map((c, i) => Math.abs(c - b[i])));
         log(`converged — in-sample weighted AUC ${auc.toFixed(4)}`, 'ok');
         log(`intercept ${b0.toFixed(3)} here vs ${M.intercept.toFixed(3)} from scikit-learn`, 'ok');
         log(`largest coefficient gap: ${diff.toFixed(3)} log-odds — the offline fit used only the ` +
@@ -1093,7 +1115,7 @@
     });
 
     // NSW average marker
-    const ab = dialAngle(M.baseRate);
+    const ab = dialAngle(TGT.baseRate);
     const [bx0, by0] = polar(cx, cy, r - 22, ab);
     const [bx1, by1] = polar(cx, cy, r + 4, ab);
     h += `<line class="dial-base" x1="${bx0.toFixed(1)}" y1="${by0.toFixed(1)}" x2="${bx1.toFixed(1)}" y2="${by1.toFixed(1)}"/>`;
@@ -1115,7 +1137,7 @@
 
   function updatePredict() {
     const p = predict(scenario);
-    const ratio = p / M.baseRate;
+    const ratio = p / TGT.baseRate;
 
     $('#dial-value').textContent = pct(p, 2);
     const arc = $('#dial-arc');
@@ -1129,7 +1151,7 @@
     const word = ratio > 4 ? 'far above' : ratio > 1.3 ? 'above' : ratio < 0.75 ? 'below' : 'close to';
     $('#dial-compare').innerHTML =
       `That is <span class="x">${ratio.toFixed(1)}\u00d7</span> the model's baseline of ` +
-      `<b>${pct(M.baseRate, 2)}</b> — ${word} typical. Put another way, about ` +
+      `<b>${pct(TGT.baseRate, 2)}</b> — ${word} typical. Put another way, about ` +
       `<b>1 in ${fmt(1 / p)}</b> crashes under these conditions ends in a death.`;
 
     renderContributions(p);
@@ -1140,7 +1162,7 @@
     const zb = zVec(rawVec(BASELINE));
     const rows = [];
     for (let i = 0; i < NF; i++) {
-      const d = M.coef[i] * (zs[i] - zb[i]);
+      const d = TGT.coef[i] * (zs[i] - zb[i]);
       if (Math.abs(d) > 1e-9) rows.push({ label: M.labels[i], d });
     }
     rows.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
@@ -1185,6 +1207,11 @@
     [['car', 'Car / wagon'], ['suv', '4WD / SUV'], ['light_com', 'Ute / light truck'],
     ['motorcycle', 'Motorcycle'], ['vulnerable', 'Bicycle / scooter'], ['heavy', 'Heavy vehicle']]
       .forEach(([v, l]) => vehSel.insertAdjacentHTML('beforeend', `<option value="${v}">${l}</option>`));
+  }
+
+  // Every point's score depends on the active target, so switching re-scores.
+  function rescorePoints() {
+    PTS.forEach((o) => { o.p = predict(o); });
   }
 
   function refresh() {
@@ -1281,6 +1308,31 @@
     if (map) { setBasemap(); drawMap(); }
   }
 
+  function setTarget(key) {
+    TGT = TARGETS[key];
+    $$('[data-target]').forEach((b) => b.classList.toggle('is-active', b.dataset.target === key));
+    document.querySelectorAll('.tgt-label').forEach((el) => { el.textContent = TGT.label.toLowerCase(); });
+    document.querySelectorAll('.tgt-short').forEach((el) => { el.textContent = TGT.short; });
+
+    rescorePoints();
+    $('#kpi-auc').textContent = TGT.metrics.auc.toFixed(3);
+    $('#stamp-auc').textContent = TGT.metrics.auc.toFixed(3);
+    $('#kpi-model-note').textContent =
+      `${TGT.label.toLowerCase()} · logistic regression · AUC ${TGT.metrics.auc.toFixed(3)}`;
+
+    // the model and predict views hold fitted numbers, so rebuild them
+    modelBuilt = false; predictBuilt = false;
+    if (state.view === 'model') buildModelView();
+    if (state.view === 'predict') buildPredictView();
+    refresh();
+  }
+
+  function wireTarget() {
+    $$('[data-target]').forEach((b) =>
+      b.addEventListener('click', () => setTarget(b.dataset.target)));
+    setTarget('fatal');
+  }
+
   function wireTheme() {
     // The <head> script already set data-theme, so only the label needs syncing.
     const btn = $('#theme-toggle');
@@ -1305,7 +1357,7 @@
     $('#kpi-killed-note').textContent = (T.killed / T.fatal).toFixed(2) + ' per fatal crash';
     $('#kpi-injured').textContent = fmt(T.injured);
     $('#kpi-injured-note').textContent = fmt(T.injured / 1826) + ' per day';
-    $('#kpi-auc').textContent = M.metrics.auc.toFixed(3);
+    $('#kpi-auc').textContent = TGT.metrics.auc.toFixed(3);
     // Captions that quote a number are written from the data, not typed in,
     // so they cannot go stale when the build is re-run.
     const sr = Object.fromEntries(D.SPEED_RATE.map((r) => [r.speed, r.rate]));
@@ -1321,13 +1373,13 @@
       `commute — the working day drives the shape of the day.`;
 
     const mi = M.features.indexOf('veh_motorcycle');
-    $('#moto-odds').textContent = Math.exp(M.coef[mi]).toFixed(1) + '\u00d7';
+    $('#moto-odds').textContent = Math.exp(TGT.coef[mi]).toFixed(1) + '\u00d7';
     const W = M.weights;
     $('#wt-note').innerHTML =
       `&times;${W.F.toFixed(1)} (fatal), &times;${W.I.toFixed(1)} (injury) and ` +
       `&times;${W.N.toFixed(1)} (non-casualty)`;
 
-    $('#stamp-auc').textContent = M.metrics.auc.toFixed(3);
+    $('#stamp-auc').textContent = TGT.metrics.auc.toFixed(3);
     $('#kpi-model-note').textContent =
       `logistic regression · ${fmt(M.trainN)} train / ${fmt(M.testN)} test`;
 
@@ -1335,6 +1387,7 @@
     wireFilters();
     wireTabs();
     wireTheme();
+    wireTarget();
     initMap();
     buildStaticPanels();
     buildExploreCharts();

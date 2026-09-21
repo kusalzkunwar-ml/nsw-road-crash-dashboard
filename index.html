@@ -56,6 +56,11 @@
           aria-expanded="false" aria-controls="filter-fields">
     <span class="filter-chev" aria-hidden="true"></span>Filters<span class="filter-badge" id="filter-badge"></span>
   </button>
+  <div class="target-switch" role="group" aria-label="Risk target">
+    <span class="target-label">Risk target</span>
+    <button class="btn is-active" type="button" data-target="fatal">Fatal</button>
+    <button class="btn" type="button" data-target="ksi">Killed or seriously injured</button>
+  </div>
   <div class="filter-fields" id="filter-fields">
   <div class="field">
     <label for="f-year">Year</label>
@@ -68,6 +73,7 @@
       <option value="0">Fatal</option>
       <option value="1">Injury</option>
       <option value="2">Non-casualty</option>
+      <option value="ksi">Killed or seriously injured</option>
     </select>
   </div>
   <div class="field">
@@ -163,6 +169,7 @@
         <div class="metric"><div class="mv" id="sel-crashes">—</div><div class="ml">Est. crashes</div></div>
         <div class="metric"><div class="mv" id="sel-fatal">—</div><div class="ml">Fatal share</div></div>
         <div class="metric"><div class="mv" id="sel-speed">—</div><div class="ml">Mean speed zone</div></div>
+        <div class="metric"><div class="mv" id="sel-ksi">—</div><div class="ml">Killed or seriously injured</div></div>
         <div class="metric is-model"><div class="mv" id="sel-risk">—</div><div class="ml">Mean model risk</div></div>
       </div>
       <div class="note" id="sel-note">Adjust the filters above to compare conditions.</div>
@@ -474,6 +481,13 @@
     fitted only on the 58,505 crashes where lighting was recorded, and its baseline rate (2.4%) is
     that group's, not the state's. Crashes with the field blank still appear on the map; they are
     scored as if lit, which is the reference level.</p>
+  <p style="margin-top:6px"><b>The target is death, not all serious harm.</b> Everything on this page
+    models whether a crash was fatal. The same records contain <b>21,861 people seriously injured</b>
+    against 1,507 killed, and the standard road-safety target — killed or seriously injured, KSI — is
+    15 times more common than fatality. It also points somewhere else: on deaths, rural roads at
+    100 km/h and over carry 39% of the harm on 13% of crashes; on KSI, two thirds of the harm sits on
+    urban roads at 70 km/h and under. Speed decides whether a crash kills, not whether it injures.
+    Read the risk figures here as fatality risk specifically.</p>
   <p style="margin-top:6px"><b>Limits.</b> The model uses only what these files contain. Driver age,
     alcohol, seatbelt use, road geometry and emergency response times are absent and would all
     matter. Coefficients describe associations in historical records, not causes, and should not be
