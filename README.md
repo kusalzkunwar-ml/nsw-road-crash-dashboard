@@ -29,8 +29,10 @@ Institute of Technology, Sydney. I led the machine learning workstream.
 
 ## The machine learning behind it
 
-The full analysis is in [`notebook/crash_severity_modelling.ipynb`](notebook/crash_severity_modelling.ipynb)
-(EDA through to modelling, with outputs), documented in the [model card](model/MODEL_CARD.md).
+The final modelling pipeline is documented in the [model card](model/MODEL_CARD.md), with its metrics and
+figures in [`model/`](model/). The exploratory notebook,
+[`notebook/crash_severity_modelling.ipynb`](notebook/crash_severity_modelling.ipynb), shows the groundwork with
+outputs: EDA, chi-square tests, time-series decomposition, GIS mapping and first-pass models.
 
 **Task:** classify each crash as Fatal, Injury or Non-casualty. Fatal crashes are only 1.5% of the data, so
 models are judged on macro-F1 and PR-AUC, not accuracy. Always predicting "Injury" would score 66% accuracy
@@ -80,8 +82,8 @@ index.html        dashboard page layout and the model write-up
 app.js            charts, map, model scoring, live retraining
 data.js           aggregated data, sampled points and model coefficients (generated, do not edit)
 styles.css        styling
-notebook/         full analysis notebook: EDA, six classifiers, SHAP, permutation importance, LSTM
-model/            model card, metrics (CSV/JSON) and evaluation figures
+notebook/         exploratory notebook: EDA, statistical tests, GIS mapping, first-pass models
+model/            final model card, metrics (CSV/JSON) and evaluation figures (6 classifiers, SHAP, LSTM)
 poster-figures/   charts from the IMPACT Day poster
 ```
 
