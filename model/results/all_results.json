@@ -1,0 +1,590 @@
+{
+  "Logistic Regression": {
+    "val": {
+      "model": "LogReg (val)",
+      "macro_f1": 0.4693135622554274,
+      "macro_pr_auc": 0.5254036480139379,
+      "macro_roc_auc": 0.7963819380607111,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5581307469454592,
+        "Injury": 0.8590736123868259,
+        "Fatal": 0.06283719454141543
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.772489539748954,
+        "Injury": 0.5166508838383839,
+        "Fatal": 0.6534653465346535
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6480438756855575,
+        "Injury": 0.6452471295520623,
+        "Fatal": 0.11464968152866242
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6355713021749386,
+        "Injury": 0.8473163924533649,
+        "Fatal": 0.09332324941351014
+      },
+      "support": {
+        "Non-casualty (towaway)": 5736,
+        "Injury": 12672,
+        "Fatal": 303
+      },
+      "confusion_matrix": [
+        [
+          4431,
+          984,
+          321
+        ],
+        [
+          3493,
+          6547,
+          2632
+        ],
+        [
+          15,
+          90,
+          198
+        ]
+      ]
+    },
+    "test": {
+      "model": "LogReg (test)",
+      "macro_f1": 0.46527842133024877,
+      "macro_pr_auc": 0.5357464230126275,
+      "macro_roc_auc": 0.8029788811084234,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5498088867654085,
+        "Injury": 0.8655611895299438,
+        "Fatal": 0.06513761467889909
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.7896723280150969,
+        "Injury": 0.49297533562285356,
+        "Fatal": 0.714765100671141
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6482642067460038,
+        "Injury": 0.6281764384106618,
+        "Fatal": 0.11939461883408072
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6371407847357986,
+        "Injury": 0.8464286008965216,
+        "Fatal": 0.12366988340556248
+      },
+      "support": {
+        "Non-casualty (towaway)": 5829,
+        "Injury": 12812,
+        "Fatal": 298
+      },
+      "confusion_matrix": [
+        [
+          4603,
+          912,
+          314
+        ],
+        [
+          3753,
+          6316,
+          2743
+        ],
+        [
+          16,
+          69,
+          213
+        ]
+      ]
+    }
+  },
+  "Decision Tree": {
+    "val": {
+      "model": "DT (val)",
+      "macro_f1": 0.4639772425032709,
+      "macro_pr_auc": 0.4864569993583665,
+      "macro_roc_auc": 0.7122298373024577,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5398362892223738,
+        "Injury": 0.8186873092019189,
+        "Fatal": 0.05613399728383884
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.6898535564853556,
+        "Injury": 0.5925662878787878,
+        "Fatal": 0.40924092409240925
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6056941680697995,
+        "Injury": 0.6875114447903314,
+        "Fatal": 0.09872611464968153
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.5766384851295558,
+        "Injury": 0.8331633050591066,
+        "Fatal": 0.049569207886437164
+      },
+      "support": {
+        "Non-casualty (towaway)": 5736,
+        "Injury": 12672,
+        "Fatal": 303
+      },
+      "confusion_matrix": [
+        [
+          3957,
+          1516,
+          263
+        ],
+        [
+          3341,
+          7509,
+          1822
+        ],
+        [
+          32,
+          147,
+          124
+        ]
+      ]
+    },
+    "test": {
+      "model": "DT (test)",
+      "macro_f1": 0.4566085605464499,
+      "macro_pr_auc": 0.4831327039631386,
+      "macro_roc_auc": 0.7092133879024166,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5224939804840958,
+        "Injury": 0.8208955223880597,
+        "Fatal": 0.055807622504537205
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.7073254417567336,
+        "Injury": 0.5666562597564783,
+        "Fatal": 0.412751677852349
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6010204081632653,
+        "Injury": 0.6704839305504249,
+        "Fatal": 0.09832134292565947
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.5720109854654092,
+        "Injury": 0.8278373217108683,
+        "Fatal": 0.049549804713138496
+      },
+      "support": {
+        "Non-casualty (towaway)": 5829,
+        "Injury": 12812,
+        "Fatal": 298
+      },
+      "confusion_matrix": [
+        [
+          4123,
+          1443,
+          263
+        ],
+        [
+          3734,
+          7260,
+          1818
+        ],
+        [
+          34,
+          141,
+          123
+        ]
+      ]
+    }
+  },
+  "Random Forest": {
+    "val": {
+      "model": "RF (val)",
+      "macro_f1": 0.5270876094419321,
+      "macro_pr_auc": 0.5398603969906474,
+      "macro_roc_auc": 0.8209030970781884,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5762946552201607,
+        "Injury": 0.8398022702306848,
+        "Fatal": 0.12389380530973451
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.7255927475592747,
+        "Injury": 0.7239583333333334,
+        "Fatal": 0.23102310231023102
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6423830838092298,
+        "Injury": 0.7775894219359213,
+        "Fatal": 0.16129032258064516
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6363563920903776,
+        "Injury": 0.880429765762651,
+        "Fatal": 0.1027950331189135
+      },
+      "support": {
+        "Non-casualty (towaway)": 5736,
+        "Injury": 12672,
+        "Fatal": 303
+      },
+      "confusion_matrix": [
+        [
+          4162,
+          1532,
+          42
+        ],
+        [
+          3045,
+          9174,
+          453
+        ],
+        [
+          15,
+          218,
+          70
+        ]
+      ]
+    },
+    "test": {
+      "model": "RF (test)",
+      "macro_f1": 0.5334508228882711,
+      "macro_pr_auc": 0.5486464498516024,
+      "macro_roc_auc": 0.8261031607881756,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5751158173395102,
+        "Injury": 0.8478886310904873,
+        "Fatal": 0.13136288998357964
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.7454108766512266,
+        "Injury": 0.7130814861067749,
+        "Fatal": 0.2684563758389262
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6492827256425583,
+        "Injury": 0.7746640098359265,
+        "Fatal": 0.17640573318632854
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6389399991880065,
+        "Injury": 0.8826257535404092,
+        "Fatal": 0.1243735968263914
+      },
+      "support": {
+        "Non-casualty (towaway)": 5829,
+        "Injury": 12812,
+        "Fatal": 298
+      },
+      "confusion_matrix": [
+        [
+          4345,
+          1431,
+          53
+        ],
+        [
+          3200,
+          9136,
+          476
+        ],
+        [
+          10,
+          208,
+          80
+        ]
+      ]
+    }
+  },
+  "Random Forest + SMOTE": {
+    "val": {
+      "model": "RF+SMOTE (val)",
+      "macro_f1": 0.48465637217371355,
+      "macro_pr_auc": 0.5461486378806678,
+      "macro_roc_auc": 0.8258135210285568,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.6226860254083485,
+        "Injury": 0.8030038686186756,
+        "Fatal": 0.2222222222222222
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.5981520223152023,
+        "Injury": 0.835385101010101,
+        "Fatal": 0.013201320132013201
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6101725057798328,
+        "Injury": 0.8188744923612454,
+        "Fatal": 0.024922118380062305
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6441773096241368,
+        "Injury": 0.8900022826025256,
+        "Fatal": 0.1042663214153411
+      },
+      "support": {
+        "Non-casualty (towaway)": 5736,
+        "Injury": 12672,
+        "Fatal": 303
+      },
+      "confusion_matrix": [
+        [
+          3431,
+          2305,
+          0
+        ],
+        [
+          2072,
+          10586,
+          14
+        ],
+        [
+          7,
+          292,
+          4
+        ]
+      ]
+    },
+    "test": {
+      "model": "RF+SMOTE (test)",
+      "macro_f1": 0.49707496200482715,
+      "macro_pr_auc": 0.5556161721651077,
+      "macro_roc_auc": 0.8316867673132423,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.6255380200860832,
+        "Injury": 0.8030155277173505,
+        "Fatal": 0.3125
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.5983873734774404,
+        "Injury": 0.8355448017483609,
+        "Fatal": 0.03355704697986577
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6116615519508988,
+        "Injury": 0.8189572734575221,
+        "Fatal": 0.06060606060606061
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6502147962498361,
+        "Injury": 0.8927915148083497,
+        "Fatal": 0.12384220543713735
+      },
+      "support": {
+        "Non-casualty (towaway)": 5829,
+        "Injury": 12812,
+        "Fatal": 298
+      },
+      "confusion_matrix": [
+        [
+          3488,
+          2341,
+          0
+        ],
+        [
+          2085,
+          10705,
+          22
+        ],
+        [
+          3,
+          285,
+          10
+        ]
+      ]
+    }
+  },
+  "XGBoost": {
+    "val": {
+      "model": "XGB (val)",
+      "macro_f1": 0.5274325912144969,
+      "macro_pr_auc": 0.5545407748050636,
+      "macro_roc_auc": 0.8239724406492751,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5651952677776364,
+        "Injury": 0.8600753669178898,
+        "Fatal": 0.11618798955613577
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.774581589958159,
+        "Injury": 0.6844223484848485,
+        "Fatal": 0.29372937293729373
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6535265132014415,
+        "Injury": 0.7622605027245561,
+        "Fatal": 0.166510757717493
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6519087641908144,
+        "Injury": 0.8894088479215789,
+        "Fatal": 0.12230471230279731
+      },
+      "support": {
+        "Non-casualty (towaway)": 5736,
+        "Injury": 12672,
+        "Fatal": 303
+      },
+      "confusion_matrix": [
+        [
+          4443,
+          1221,
+          72
+        ],
+        [
+          3394,
+          8673,
+          605
+        ],
+        [
+          24,
+          190,
+          89
+        ]
+      ]
+    },
+    "test": {
+      "model": "XGB (test)",
+      "macro_f1": 0.5250570304058022,
+      "macro_pr_auc": 0.5572946069851609,
+      "macro_roc_auc": 0.8306850733992176,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5584415584415584,
+        "Injury": 0.8657627820327054,
+        "Fatal": 0.11368015414258188
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.7893292159890204,
+        "Injury": 0.6529035279425539,
+        "Fatal": 0.3959731543624161
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6541086152971283,
+        "Injury": 0.744415769333452,
+        "Fatal": 0.17664670658682635
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6572405789556177,
+        "Injury": 0.8859921592606643,
+        "Fatal": 0.12865108273920045
+      },
+      "support": {
+        "Non-casualty (towaway)": 5829,
+        "Injury": 12812,
+        "Fatal": 298
+      },
+      "confusion_matrix": [
+        [
+          4601,
+          1140,
+          88
+        ],
+        [
+          3615,
+          8365,
+          832
+        ],
+        [
+          23,
+          157,
+          118
+        ]
+      ]
+    }
+  },
+  "MLP (Entity Embeddings)": {
+    "val": {
+      "model": "MLP (val)",
+      "macro_f1": 0.5107434344811564,
+      "macro_pr_auc": 0.5289604360857451,
+      "macro_roc_auc": 0.7909866584727178,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5475725786777262,
+        "Injury": 0.8595609355765286,
+        "Fatal": 0.09803921568627451
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.7826011157601116,
+        "Injury": 0.6612215909090909,
+        "Fatal": 0.24752475247524752
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6443232381225779,
+        "Injury": 0.747457627118644,
+        "Fatal": 0.1404494382022472
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6310084247497765,
+        "Injury": 0.8820011416214675,
+        "Fatal": 0.07387174188599133
+      },
+      "support": {
+        "Non-casualty (towaway)": 5736,
+        "Injury": 12672,
+        "Fatal": 303
+      },
+      "confusion_matrix": [
+        [
+          4489,
+          1177,
+          70
+        ],
+        [
+          3673,
+          8379,
+          620
+        ],
+        [
+          36,
+          192,
+          75
+        ]
+      ]
+    },
+    "test": {
+      "model": "MLP (test)",
+      "macro_f1": 0.513676247520754,
+      "macro_pr_auc": 0.5374859731034587,
+      "macro_roc_auc": 0.7994362120446943,
+      "per_class_precision": {
+        "Non-casualty (towaway)": 0.5420946983114889,
+        "Injury": 0.860453141091658,
+        "Fatal": 0.10921052631578948
+      },
+      "per_class_recall": {
+        "Non-casualty (towaway)": 0.7876136558586379,
+        "Injury": 0.6521230096784265,
+        "Fatal": 0.2785234899328859
+      },
+      "per_class_f1": {
+        "Non-casualty (towaway)": 0.6421877185620366,
+        "Injury": 0.7419412130361425,
+        "Fatal": 0.15689981096408318
+      },
+      "per_class_pr_auc": {
+        "Non-casualty (towaway)": 0.6378429389175383,
+        "Injury": 0.8820739292655371,
+        "Fatal": 0.09254105112730061
+      },
+      "support": {
+        "Non-casualty (towaway)": 5829,
+        "Injury": 12812,
+        "Fatal": 298
+      },
+      "confusion_matrix": [
+        [
+          4591,
+          1166,
+          72
+        ],
+        [
+          3852,
+          8355,
+          605
+        ],
+        [
+          26,
+          189,
+          83
+        ]
+      ]
+    }
+  }
+}
